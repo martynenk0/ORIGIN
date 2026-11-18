@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ORIGIN // Исследуй реальности</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0a111a;
+            --text-light: #ffffff;
+            --accent-yellow: #D7FF00;
+            --font-display: 'Anton', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: var(--font-body);
+            overflow: hidden; /* Prevent scrolling on body, handle in sections */
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+        }
+
+        /* --- PRELOADER --- */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #05080c;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .preloader-text {
+            font-family: var(--font-display);
+            font-size: 24px;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .preloader-bar {
+            width: 200px;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preloader-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--accent-yellow);
+            transition: width 0.1s linear;
+        }
+
+        /* --- AUDIO TOGGLE & UI ELEMENTS --- */
+        .ui-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .audio-toggle {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+        }
+
+        .audio-toggle:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .audio-icon {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: var(--text-light);
+            stroke-width: 2;
+            transition: 0.3s;
+        }
+
+        .audio-toggle.muted .audio-icon {
+            stroke: rgba(255,255,255,0.3);
+        }
+
+        /* --- HERO SECTION --- */
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        #hero {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Background */
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-bg-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 80%;
+            opacity: 0.7;
+            filter: brightness(0.8) contrast(1.1);
+        }
+
+        /* Architecture Overlay */
+        .architecture-shape {
+            position: absolute;
+            top: -10%;
+            right: -20%;
+            width: 70%;
+            height: 120%;
+            background: linear-gradient(135deg, rgba(180,190,200,0.3) 0%, rgba(80,90,100,0.05) 100%);
+            clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+            z-index: 2;
+            backdrop-filter: blur(2px);
+            border-left: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .architecture-shape::before {
+            content: '';
+            position: absolute;
+            bottom: 20%;
+            left: -10%;
+            width: 120%;
+            height: 15%;
+            background: linear-gradient(to right, rgba(200,210,220,0.4), rgba(150,160,170,0.1));
+            transform: skewY(-12deg);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .hero-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(10,17,26,0.5) 0%, rgba(10,17,26,0) 30%, rgba(10,17,26,0.9) 100%);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* Header */
+        header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 24px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 3px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 100;
+            padding: 5px;
+        }
+
+        .menu-btn span {
+            display: block;
+            width: 24px;
+            height: 1.5px;
+            background: var(--text-light);
+            transition: 0.3s;
+        }
+
+        /* Small Text */
+        .hero-subtitle {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            font-size: 12px;
+            line-height: 1.4;
+            color: rgba(255,255,255,0.7);
+            z-index: 20;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .hero-subtitle::before {
+            content: '';
+            display: block;
+            width: 1px;
+            height: 40px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Big Typography */
+        .hero-title-container {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            z-index: 4; /* Behind the 3D object */
+            pointer-events: none;
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: 26vw;
+            line-height: 0.8;
+            color: var(--text-light);
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            opacity: 0.95;
+            white-space: nowrap;
+        }
+
+        /* 3D Canvas Container */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* CTA Area */
+        .cta-container {
+            position: absolute;
+            bottom: 120px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 20;
+            opacity: 0;
+        }
+
+        .btn-start {
+            background-color: var(--accent-yellow);
+            color: #000;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 14px;
+            padding: 18px 36px;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-start::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(215, 255, 0, 0.3);
+        }
+
+        .btn-start:hover::after {
+            left: 100%;
+        }
+
+        .cta-text {
+            font-size: 11px;
+            line-height: 1.3;
+            color: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .cta-text::before {
+            content: '';
+            display: block;
+            width: 1px;
+            height: 30px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* --- REALITIES SECTION --- */
+        #realities {
+            position: relative;
+            padding: 60px 20px 120px;
+            background: var(--bg-dark);
+            z-index: 10;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .section-counter {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .reality-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1 / 1;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.15);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.3s;
+            opacity: 0;
+            transform: translateY(30px);
+            background: #000;
+        }
+
+        .reality-card:hover {
+            transform: scale(1.02) translateY(-5px);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .reality-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s, filter 0.3s;
+            opacity: 0.8;
+        }
+
+        .reality-card:hover .reality-img {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%);
+            display: flex;
+            align-items: flex-end;
+            padding: 16px;
+            pointer-events: none;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+            line-height: 1.2;
+        }
+
+        .card-arrow {
+            font-size: 18px;
+            line-height: 1;
+            transition: transform 0.3s;
+        }
+
+        .reality-card:hover .card-arrow {
+            transform: translateX(4px);
+            color: var(--accent-yellow);
+        }
+
+        /* Footer */
+        footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            z-index: 10;
+            background: var(--bg-dark);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .star-icon {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.5;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            font-size: 10px;
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            background-color: var(--accent-yellow);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-yellow);
+        }
+
+        /* --- WORLD OVERLAY (FULLSCREEN) --- */
+        #world-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 500;
+            background-color: #000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #world-screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .world-bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .world-bg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.1);
+            transition: transform 10s linear;
+        }
+
+        #world-screen.active .world-bg {
+            transform: scale(1);
+        }
+
+        .world-overlay-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            background: linear-gradient(to top, rgba(10,17,26,1) 0%, rgba(10,17,26,0.4) 50%, rgba(10,17,26,0.8) 100%);
+        }
+
+        /* Unique Filters per World */
+        .world-future .world-bg { filter: hue-rotate(180deg) saturate(1.5) brightness(0.7); }
+        .world-past .world-bg { filter: sepia(0.5) hue-rotate(-30deg) contrast(1.2) brightness(0.6); }
+        .world-parallel .world-bg { filter: saturate(1.2) contrast(1.1) brightness(0.8); }
+        .world-unknown .world-bg { filter: hue-rotate(240deg) saturate(1.5) brightness(0.5); }
+
+        .world-content {
+            position: relative;
+            z-index: 10;
+            padding: 80px 20px 40px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            pointer-events: none; /* Let clicks pass to specific buttons */
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 24px;
+            left: 20px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-light);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            z-index: 20;
+            padding: 10px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .back-btn::before {
+            content: '←';
+            font-size: 16px;
+        }
+
+        .world-detail-title {
+            font-family: var(--font-display);
+            font-size: 14vw;
+            line-height: 0.9;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        .world-detail-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 32px;
+            max-width: 400px;
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        .btn-explore {
+            background-color: transparent;
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+            padding: 16px 32px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            align-self: flex-start;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            pointer-events: auto;
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        .btn-explore:hover {
+            background-color: var(--accent-yellow);
+            color: #000;
+            box-shadow: 0 0 20px rgba(215, 255, 0, 0.4);
+        }
+
+        /* Secret Element */
+        .secret-element {
+            position: absolute;
+            top: 40%;
+            right: 15%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            z-index: 15;
+            opacity: 0.3;
+            transition: 0.3s;
+            pointer-events: auto;
+            animation: floatSecret 4s ease-in-out infinite;
+        }
+
+        .secret-element:hover {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .secret-element svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--accent-yellow);
+            filter: drop-shadow(0 0 10px var(--accent-yellow));
+        }
+
+        @keyframes floatSecret {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(15deg); }
+        }
+
+        /* Menu Overlay */
+        #menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 8, 12, 0.98);
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+
+        #menu-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .menu-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            text-align: center;
+        }
+
+        .menu-nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .menu-nav a:hover {
+            color: var(--accent-yellow);
+            transform: scale(1.1);
+        }
+
+        .close-menu-btn {
+            position: absolute;
+            top: 24px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        /* Media Queries for Desktop */
+        @media (min-width: 768px) {
+            .hero-title { font-size: 20vw; }
+            .hero-subtitle { top: 120px; left: 40px; font-size: 14px; }
+            header { padding: 32px 40px; }
+            .logo { font-size: 24px; }
+            .cta-container { bottom: 100px; left: 40px; }
+            .btn-start { padding: 20px 48px; font-size: 16px; }
+            .cta-text { font-size: 13px; }
+            
+            #realities { padding: 100px 40px 150px; max-width: 1200px; margin: 0 auto; }
+            .cards-grid { gap: 24px; }
+            .section-title { font-size: 24px; }
+            .card-overlay { padding: 24px; }
+            .card-title { font-size: 16px; }
+            
+            footer { padding: 24px 40px; }
+            
+            .world-detail-title { font-size: 10vw; }
+            .world-content { padding: 100px 60px 60px; }
+            .world-detail-desc { font-size: 18px; }
+            .back-btn { top: 40px; left: 60px; }
+            .secret-element { top: 30%; right: 20%; width: 40px; height: 40px; }
+            
+            .ui-container { bottom: 40px; right: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PRELOADER -->
+    <div id="preloader">
+        <div class="preloader-text">ORIGIN.EXE</div>
+        <div class="preloader-bar">
+            <div class="preloader-progress" id="preloader-progress"></div>
+        </div>
+    </div>
+
+    <!-- MENU OVERLAY -->
+    <div id="menu-overlay">
+        <button class="close-menu-btn" id="close-menu">×</button>
+        <nav class="menu-nav">
+            <a href="#" class="menu-link">Главная</a>
+            <a href="#realities" class="menu-link">Реальности</a>
+            <a href="#" class="menu-link">О проекте</a>
+            <a href="#" class="menu-link">Контакты</a>
+        </nav>
+    </div>
+
+    <!-- AUDIO UI -->
+    <div class="ui-container">
+        <div class="audio-toggle muted" id="audio-toggle">
+            <svg class="audio-icon" viewBox="0 0 24 24">
+                <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="sound-waves" d="M15.54 8.46C16.47 9.39 17 10.65 17 12C17 13.35 16.47 14.61 15.54 15.54" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="mute-line" d="M23 9L17 15M17 9L23 15" stroke-linecap="round" stroke-linejoin="round" style="display: block;"/>
+            </svg>
+        </div>
+    </div>
+
+    <div id="app">
+        <!-- HERO SECTION -->
+        <section id="hero">
+            <!-- Background -->
+            <div class="hero-bg">
+                <img src="https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?q=80&w=2000&auto=format&fit=crop" alt="Sky and clouds" class="hero-bg-image">
+                <div class="architecture-shape"></div>
+                <div class="hero-vignette"></div>
+            </div>
+
+            <!-- Header -->
+            <header>
+                <div class="logo">ORIGIN</div>
+                <button class="menu-btn" id="open-menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </header>
+
+            <!-- Text Elements -->
+            <div class="hero-subtitle">
+                Исследуй<br>другие версии<br>своей реальности
+            </div>
+
+            <!-- Big Title -->
+            <div class="hero-title-container">
+                <h1 class="hero-title">ORIGIN</h1>
+            </div>
+
+            <!-- Three.js Canvas -->
+            <div id="canvas-container"></div>
+
+            <!-- CTA -->
+            <div class="cta-container">
+                <button class="btn-start" id="start-btn">НАЧАТЬ</button>
+                <div class="cta-text">
+                    Погрузись<br>в неизведанное
+                </div>
+            </div>
+        </section>
+
+        <!-- REALITIES SECTION -->
+        <section id="realities">
+            <div class="section-header">
+                <h2 class="section-title">ВЫБЕРИ СВОЮ<br>РЕАЛЬНОСТЬ</h2>
+                <span class="section-counter" id="discovery-counter">01 / 04</span>
+            </div>
+
+            <div class="cards-grid">
+                <!-- Card 1: Future -->
+                <div class="reality-card" data-reality="future">
+                    <img src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=800&auto=format&fit=crop" alt="Future" class="reality-img">
+                    <div class="card-overlay">
+                        <div class="card-title">
+                            БУДУЩЕЕ
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Past -->
+                <div class="reality-card" data-reality="past">
+                    <img src="https://images.unsplash.com/photo-1549887552-cb1071d3e5f0?q=80&w=800&auto=format&fit=crop" alt="Past" class="reality-img">
+                    <div class="card-overlay">
+                        <div class="card-title">
+                            ПРОШЛОЕ
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Parallel -->
+                <div class="reality-card" data-reality="parallel">
+                    <img src="https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=800&auto=format&fit=crop" alt="Parallel Life" class="reality-img">
+                    <div class="card-overlay">
+                        <div class="card-title">
+                            ПАРАЛЛЕЛЬНАЯ<br>ЖИЗНЬ
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Unknown -->
+                <div class="reality-card" data-reality="unknown">
+                    <img src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop" alt="Unknown" class="reality-img">
+                    <div class="card-overlay">
+                        <div class="card-title">
+                            НЕИЗВЕСТНОЕ
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <div class="footer-left">
+                <svg class="star-icon" viewBox="0 0 24 24">
+                    <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" stroke-linejoin="round"/>
+                </svg>
+                ORIGIN.EXE
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                ОНЛАЙН
+            </div>
+        </footer>
+    </div>
+
+    <!-- WORLD FULLSCREEN OVERLAY -->
+    <div id="world-screen" class="world-future">
+        <button class="back-btn" id="back-btn">Назад</button>
+        
+        <div class="world-bg-container">
+            <img src="" alt="World Background" class="world-bg" id="world-bg-img">
+            <div class="world-overlay-gradient"></div>
+        </div>
+
+        <!-- Secret Element -->
+        <div class="secret-element" id="secret-element" title="Артефакт">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" stroke="none"/>
+            </svg>
+        </div>
+
+        <div class="world-content">
+            <h1 class="world-detail-title" id="world-detail-title">БУДУЩЕЕ</h1>
+            <p class="world-detail-desc" id="world-detail-desc">Исследуйте мегаполисы будущего, парящие над облаками. Технологии слились с природой, создавая идеальную среду для жизни.</p>
+            <button class="btn-explore" id="btn-explore">Исследовать</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // --- DATA FOR WORLDS ---
+        const worldsData = {
+            future: {
+                title: "БУДУЩЕЕ",
+                desc: "Исследуйте мегаполисы будущего, парящие над облаками. Технологии слились с природой, создавая идеальную среду для жизни.",
+                img: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=1920&auto=format&fit=crop",
+                class: "world-future"
+            },
+            past: {
+                title: "ПРОШЛОЕ",
+                desc: "Древние руины хранят секреты цивилизаций, исчезнувших под светом багровой луны. Откройте для себя забытую историю.",
+                img: "https://images.unsplash.com/photo-1549887552-cb1071d3e5f0?q=80&w=1920&auto=format&fit=crop",
+                class: "world-past"
+            },
+            parallel: {
+                title: "ПАРАЛЛЕЛЬНАЯ ЖИЗНЬ",
+                desc: "Что если бы ваша жизнь сложилась иначе? Загляните в мир, где каждый ваш выбор привел к созданию этого закатного мегаполиса.",
+                img: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=1920&auto=format&fit=crop",
+                class: "world-parallel"
+            },
+            unknown: {
+                title: "НЕИЗВЕСТНОЕ",
+                desc: "За пределами известного пространства лежит бесконечная тьма и загадочные космические явления. Готовы ли вы шагнуть в пустоту?",
+                img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1920&auto=format&fit=crop",
+                class: "world-unknown"
+            }
+        };
+
+        // --- AUDIO SYSTEM (Web Audio API for UI clicks to avoid heavy assets) ---
+        let audioCtx;
+        let isAudioEnabled = false;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playClickSound() {
+            if (!isAudioEnabled) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playSecretSound() {
+            if (!isAudioEnabled) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Audio Toggle Logic
+        const audioToggle = document.getElementById('audio-toggle');
+        const muteLine = document.getElementById('mute-line');
+        const soundWaves = document.getElementById('sound-waves');
+
+        audioToggle.addEventListener('click', () => {
+            isAudioEnabled = !isAudioEnabled;
+            if (isAudioEnabled) {
+                initAudio();
+                audioToggle.classList.remove('muted');
+                muteLine.style.display = 'none';
+                soundWaves.style.display = 'block';
+                playClickSound();
+            } else {
+                audioToggle.classList.add('muted');
+                muteLine.style.display = 'block';
+                soundWaves.style.display = 'none';
+            }
+        });
+
+        // --- PRELOADER LOGIC ---
+        let progress = 0;
+        const progressBar = document.getElementById('preloader-progress');
+        
+        const preloaderInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(preloaderInterval);
+                setTimeout(() => {
+                    gsap.to("#preloader", {
+                        opacity: 0,
+                        duration: 0.8,
+                        onComplete: () => {
+                            document.getElementById('preloader').style.display = 'none';
+                            startHeroAnimations();
+                        }
+                    });
+                }, 500);
+            }
+            progressBar.style.width = `${progress}%`;
+        }, 100);
+
+        // --- THREE.JS 3D RING ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        
+        // Camera
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 16;
+        
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        // Geometry & Material
+        const geometry = new THREE.TorusGeometry(6.5, 0.7, 64, 128);
+        
+        // Advanced Glass Material
+        const material = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 0.1,
+            roughness: 0.05,
+            transmission: 1.0, // Pure glass
+            thickness: 2.0,
+            ior: 1.5,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.05,
+            envMapIntensity: 2.0,
+            side: THREE.DoubleSide
+        });
+
+        const ring = new THREE.Mesh(geometry, material);
+        ring.rotation.x = Math.PI / 3;
+        ring.rotation.y = Math.PI / 6;
+        ring.rotation.z = -Math.PI / 8;
+        scene.add(ring);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+        scene.add(ambientLight);
+
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 4);
+        dirLight1.position.set(5, 5, 5);
+        scene.add(dirLight1);
+
+        const dirLight2 = new THREE.DirectionalLight(0xaaccff, 3);
+        dirLight2.position.set(-5, -5, 2);
+        scene.add(dirLight2);
+
+        const pointLight = new THREE.PointLight(0xffffff, 2, 20);
+        pointLight.position.set(0, 0, 10);
+        scene.add(pointLight);
+
+        // Animation Loop
+        let clock = new THREE.Clock();
+        
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            const elapsedTime = clock.getElapsedTime();
+            
+            // Smooth rotation
+            ring.rotation.y += 0.003;
+            ring.rotation.x += 0.001;
+            
+            // Float
+            ring.position.y = Math.sin(elapsedTime * 0.5) * 0.8;
+            
+            renderer.render(scene, camera);
+        }
+        animate3D();
+
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- HERO ANIMATIONS ---
+        function startHeroAnimations() {
+            const tl = gsap.timeline();
+
+            tl.to(".hero-title", {
+                y: 0,
+                opacity: 1,
+                duration: 1.5,
+                ease: "power4.out"
+            })
+            .from(".hero-subtitle", {
+                opacity: 0,
+                x: -20,
+                duration: 1,
+                ease: "power3.out"
+            }, "-=1")
+            .from("header", {
+                opacity: 0,
+                y: -20,
+                duration: 1,
+                ease: "power3.out"
+            }, "-=0.8")
+            .to(".cta-container", {
+                opacity: 1,
+                y: 0,
+                duration: 1,
+                ease: "power3.out"
+            }, "-=0.5")
+            .from("#canvas-container", {
+                scale: 1.2,
+                opacity: 0,
+                duration: 2,
+                ease: "power2.out"
+            }, 0);
+            
+            // Trigger card animations
+            ScrollTrigger.refresh();
+        }
+
+        // Init state for title before animation
+        gsap.set(".hero-title", { y: 50, opacity: 0 });
+
+        // --- GSAP SCROLL ANIMATIONS ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        gsap.to(".reality-card", {
+            scrollTrigger: {
+                trigger: "#realities",
+                start: "top 85%",
+            },
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: "power3.out"
+        });
+
+        // --- INTERACTIVITY ---
+        
+        // Smooth Scroll
+        document.getElementById('start-btn').addEventListener('click', () => {
+            playClickSound();
+            document.getElementById('realities').scrollIntoView({ behavior: 'smooth' });
+            // Ensure #app can scroll
+            document.getElementById('app').style.overflowY = 'auto';
+        });
+
+        // Menu Logic
+        const menuOverlay = document.getElementById('menu-overlay');
+        const openMenuBtn = document.getElementById('open-menu');
+        const closeMenuBtn = document.getElementById('close-menu');
+
+        openMenuBtn.addEventListener('click', () => {
+            playClickSound();
+            menuOverlay.classList.add('active');
+        });
+
+        closeMenuBtn.addEventListener('click', () => {
+            playClickSound();
+            menuOverlay.classList.remove('active');
+        });
+
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                playClickSound();
+                menuOverlay.classList.remove('active');
+                if(link.getAttribute('href') === '#realities') {
+                    document.getElementById('realities').scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // --- WORLD SCREEN LOGIC ---
+        const worldScreen = document.getElementById('world-screen');
+        const backBtn = document.getElementById('back-btn');
+        const worldTitle = document.getElementById('world-detail-title');
+        const worldDesc = document.getElementById('world-detail-desc');
+        const worldBg = document.getElementById('world-bg-img');
+        const btnExplore = document.getElementById('btn-explore');
+        const secretElement = document.getElementById('secret-element');
+        const discoveryCounter = document.getElementById('discovery-counter');
+
+        // State for secrets
+        let discoveredSecrets = parseInt(localStorage.getItem('origin_secrets')) || 0;
+        let discoveredWorlds = JSON.parse(localStorage.getItem('origin_worlds')) || [];
+
+        function updateCounterUI() {
+            const count = discoveredWorlds.length;
+            discoveryCounter.innerText = `0${count} / 04`;
+        }
+
+        document.querySelectorAll('.reality-card').forEach(card => {
+            card.addEventListener('click', () => {
+                playClickSound();
+                const realityKey = card.getAttribute('data-reality');
+                const data = worldsData[realityKey];
+
+                // Update Content
+                worldTitle.innerHTML = data.title;
+                worldDesc.innerHTML = data.desc;
+                worldBg.src = data.img;
+                
+                // Set Unique Theme Class
+                worldScreen.className = ''; // Reset
+                worldScreen.classList.add(data.class);
+                worldScreen.classList.add('active');
+
+                // Check discovery
+                if (!discoveredWorlds.includes(realityKey)) {
+                    discoveredWorlds.push(realityKey);
+                    localStorage.setItem('origin_worlds', JSON.stringify(discoveredWorlds));
+                    updateCounterUI();
+                }
+
+                // Reset Secret
+                secretElement.style.display = 'block';
+                secretElement.style.opacity = '0.3';
+
+                // Animations
+                gsap.fromTo(".world-bg", { scale: 1.2 }, { scale: 1, duration: 8, ease: "power2.out" });
+                
+                gsap.to(".world-detail-title", { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.2 });
+                gsap.to(".world-detail-desc", { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.4 });
+                gsap.to(".btn-explore", { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.6 });
+            });
+        });
+
+        backBtn.addEventListener('click', () => {
+            playClickSound();
+            worldScreen.classList.remove('active');
+            
+            // Reset text for next time
+            gsap.to(".world-detail-title", { y: 30, opacity: 0, duration: 0.3 });
+            gsap.to(".world-detail-desc", { y: 30, opacity: 0, duration: 0.3 });
+            gsap.to(".btn-explore", { y: 30, opacity: 0, duration: 0.3 });
+        });
+
+        btnExplore.addEventListener('click', () => {
+            playClickSound();
+            // Micro-interaction for explore button
+            gsap.to(btnExplore, { scale: 0.95, duration: 0.1, yoyo: true, repeat: 1 });
+        });
+
+        // Secret Element Logic
+        secretElement.addEventListener('click', () => {
+            if (secretElement.style.display === 'none') return;
+            
+            playSecretSound();
+            secretElement.style.display = 'none';
+            
+            discoveredSecrets++;
+            localStorage.setItem('origin_secrets', discoveredSecrets);
+            
+            // Visual feedback
+            const star = secretElement.querySelector('svg');
+            gsap.to(secretElement, {
+                scale: 3,
+                opacity: 0,
+                duration: 0.5,
+                onComplete: () => {
+                    secretElement.style.scale = '1';
+                }
+            });
+
+            // Show alert-like UI
+            const toast = document.createElement('div');
+            toast.innerText = `АРТЕФАКТ НАЙДЕН [${discoveredSecrets}/4]`;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '100px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.background = 'var(--accent-yellow)';
+            toast.style.color = '#000';
+            toast.style.padding = '10px 20px';
+            toast.style.fontSize = '12px';
+            toast.style.fontWeight = 'bold';
+            toast.style.borderRadius = '30px';
+            toast.style.zIndex = '1000';
+            toast.style.pointerEvents = 'none';
+            document.body.appendChild(toast);
+            
+            gsap.fromTo(toast, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, onComplete: () => {
+                gsap.to(toast, { y: -20, opacity: 0, duration: 0.5, delay: 2, onComplete: () => toast.remove() });
+            }});
+        });
+
+        // Init Counter
+        updateCounterUI();
+
+        // --- PARALLAX EFFECTS ---
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX);
+            mouseY = (event.clientY - windowHalfY);
+        });
+
+        function updateParallax() {
+            targetX = mouseX * 0.05;
+            targetY = mouseY * 0.05;
+
+            // 3D Ring Parallax
+            ring.position.x += (targetX - ring.position.x) * 0.05;
+            // Base Y is animated in 3D loop, so we add offset
+            ring.position.y += (-targetY - (ring.position.y - Math.sin(clock.getElapsedTime() * 0.5) * 0.8)) * 0.05;
+
+            // Title Parallax
+            gsap.to(".hero-title", {
+                x: targetX * 0.5,
+                y: targetY * 0.5,
+                duration: 1,
+                ease: "power2.out"
+            });
+
+            // Architecture Parallax
+            gsap.to(".architecture-shape", {
+                x: targetX * 0.2,
+                y: targetY * 0.2,
+                duration: 1,
+                ease: "power2.out"
+            });
+
+            requestAnimationFrame(updateParallax);
+        }
+
+        if (window.innerWidth > 768) {
+            updateParallax();
+        }
+
+        // Device Orientation (Mobile Parallax)
+        if (window.DeviceOrientationEvent && window.innerWidth <= 768) {
+            window.addEventListener('deviceorientation', (event) => {
+                const tiltX = event.gamma / 45;
+                const tiltY = event.beta / 90;
+
+                gsap.to(ring.position, {
+                    x: tiltX * 2,
+                    duration: 1,
+                    ease: "power2.out"
+                });
+                
+                gsap.to(".hero-title", {
+                    x: tiltX * 15,
+                    duration: 1,
+                    ease: "power2.out"
+                });
+            });
+        }
+        
+    </script>
+</body>
+</html>
